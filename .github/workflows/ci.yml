@@ -265,10 +265,6 @@ jobs:
       matrix:
         include:
           - base_image: fedora
-            base_image_tag: 38
-          - base_image: fedora
-            base_image_tag: 39
-          - base_image: fedora
             base_image_tag: 40
           - base_image: fedora
             base_image_tag: 41
