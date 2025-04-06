@@ -1,5 +1,5 @@
 ARG base_image=fedora
-ARG base_image_tag=40
+ARG base_image_tag=41
 ARG crystal_version=1.15.1
 
 # Copy the statically compiled compiler from this image
