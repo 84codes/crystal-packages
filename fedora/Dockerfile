@@ -1,5 +1,5 @@
 ARG base_image=fedora
-ARG base_image_tag=40
+ARG base_image_tag=41
 ARG crystal_version=1.15.1
 
 # Copy the statically compiled compiler from this image
@@ -53,7 +53,7 @@ WORKDIR /usr/src/libgc
 ARG gc_version=8.2.8
 RUN git clone --depth=1 --single-branch --branch=v${gc_version} https://github.com/ivmai/bdwgc.git . && \
   ./autogen.sh && \
-  ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr --disable-dependency-tracking && \
+  ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr --disable-dependency-tracking --enable-valgrind-tracking && \
   make -j$(nproc) CFLAGS="-DNO_EXECUTE_PERMISSION -pipe -fPIE -O3" && \
   make install
 # Link crystal

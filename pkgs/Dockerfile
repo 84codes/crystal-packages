@@ -13,8 +13,8 @@ WORKDIR /tmp/libgc
 ARG gc_version=8.2.8
 RUN git clone --depth=1 --single-branch --branch=v${gc_version} https://github.com/ivmai/bdwgc.git . && \
   ./autogen.sh && \
-  ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
-  make -j$(nproc) CFLAGS="-DNO_GETCONTEXT -pipe -O3" && \
+  ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr --enable-valgrind-tracking && \
+  make -j$(nproc) CFLAGS="-DNO_EXECUTE_PERMISSION -pipe -O3" && \
   make install
 # build distribution packages
 WORKDIR /tmp/pkg
