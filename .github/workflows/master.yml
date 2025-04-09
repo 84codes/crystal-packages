@@ -108,6 +108,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             crystal_version=${{ env.crystal_version }}
+            shards_version=${{ env.shards_version }}
             gc_version=${{ env.gc_version }}
             base_image=${{ matrix.base_image }}
             codename=${{ matrix.codename }}
@@ -130,6 +131,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             crystal_version=${{ env.crystal_version }}
+            shards_version=${{ env.shards_version }}
             gc_version=${{ env.gc_version }}
             base_image=${{ matrix.base_image }}
             codename=${{ matrix.codename }}
