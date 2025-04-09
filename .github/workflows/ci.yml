@@ -198,6 +198,7 @@ jobs:
       - name: Build and push container
         uses: depot/build-push-action@v1
         with:
+          project: zjh7v82xv6
           context: debian-static
           pull: true
           platforms: linux/amd64,linux/arm64
@@ -217,6 +218,7 @@ jobs:
       - name: Export packages
         uses: depot/build-push-action@v1
         with:
+          project: zjh7v82xv6
           context: debian-static
           platforms: linux/amd64,linux/arm64
           build-args: |
