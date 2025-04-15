@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: crystal
+Source: https://crystal-lang.org
+
+Files: *
+Copyright: 2012-$(date +%Y) Manas Technology Solutions
+License: Apache-2.0

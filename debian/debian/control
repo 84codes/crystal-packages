@@ -1,0 +1,13 @@
+Source: crystal
+Maintainer: 84codes <contact@84codes.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.5.1
+Homepage: https://crystal-lang.org
+
+Package: crystal
+Architecture: any
+Depends: gcc, pkg-config, libpcre2-dev, libz-dev, libffi-dev, ${misc:Depends}, ${shlibs:Depends}
+Recommends: libssl-dev, libxml2-dev, libgmp-dev, libyaml-dev, git
+Description: a general-purpose, object-oriented programming language
+ Crystal is a programming language with a syntax similar to Ruby but
+ with static type-checking and compilation to native code.
