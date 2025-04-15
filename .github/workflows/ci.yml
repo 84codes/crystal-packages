@@ -256,6 +256,8 @@ jobs:
             base_image_tag: 40
           - base_image: fedora
             base_image_tag: 41
+          - base_image: fedora
+            base_image_tag: 42
     steps:
       - name: Checkout
         uses: actions/checkout@v4
