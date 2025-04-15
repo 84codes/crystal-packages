@@ -1,0 +1,5 @@
+crystal (${crystal_version}-${pkg_revision}) unstable; urgency=medium
+
+  * Crystal programming language package
+
+ -- 84codes <contact@84codes.com>  $(date -R)
