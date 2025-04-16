@@ -152,7 +152,7 @@ jobs:
         with:
           project: zjh7v82xv6
           context: debian
-          push: true
+          push: ${{ github.ref == 'refs/heads/main' }}
           platforms: linux/amd64,linux/arm64
           build-args: |
             crystal_version=${{ env.crystal_version }}
