@@ -106,11 +106,11 @@ jobs:
           - base_image: debian
             version: 12
             codename: bookworm
-            llvm_version: 15
+            llvm_version: 19
           - base_image: debian
             version: 11
             codename: bullseye
-            llvm_version: 13
+            llvm_version: 16
           - base_image: debian
             version: 10
             codename: buster
