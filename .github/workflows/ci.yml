@@ -111,10 +111,6 @@ jobs:
             version: 11
             codename: bullseye
             llvm_version: 16
-          - base_image: debian
-            version: 10
-            codename: buster
-            llvm_version: 13
     steps:
       - name: Checkout
         uses: actions/checkout@v4
