@@ -27,7 +27,7 @@ RUN rpmdev-setuptree
 WORKDIR /root/rpmbuild
 COPY crystal.spec /root/rpmbuild/SPECS/
 
-ARG crystal_version=1.16.0
+ARG crystal_version=1.16.1
 ARG gc_version=8.2.8
 ARG shards_version=0.19.1
 ARG pkg_revision=1

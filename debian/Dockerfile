@@ -1,6 +1,6 @@
 ARG base_image=debian
 ARG codename=bookworm
-ARG crystal_version=1.16.0
+ARG crystal_version=1.16.1
 ARG llvm_version=19
 
 # Copy the statically compiled compiler from this image
