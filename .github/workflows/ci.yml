@@ -92,6 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
     strategy:
+      max-parallel: 2
       fail-fast: false
       matrix:
         include:
@@ -245,6 +246,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
     strategy:
+      max-parallel: 1
       fail-fast: false
       matrix:
         include:
