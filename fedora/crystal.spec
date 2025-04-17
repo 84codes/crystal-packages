@@ -35,11 +35,11 @@ Crystal is a programming language with the following goals:
 %build
 # Build Crystal
 cd ../crystal-%{getenv:crystal_version}
-make crystal interpreter=1 LDFLAGS="%{build_ldflags}" CRYSTAL_CONFIG_LIBRARY_PATH=%{_libdir}/crystal
+make crystal release=1 interpreter=1 LDFLAGS="%{build_ldflags}" CRYSTAL_CONFIG_LIBRARY_PATH=%{_libdir}/crystal
 
 # Build Shards
 cd ../shards-%{getenv:shards_version}
-make FLAGS="--link-flags=\"%{build_ldflags}\""
+make release=1 FLAGS="--link-flags=\"%{build_ldflags}\""
 
 %install
 # Install Crystal
