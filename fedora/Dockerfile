@@ -23,14 +23,17 @@ COPY --from=alpine /usr/share/crystal /usr/share/crystal
 # Setup RPM build environment
 RUN rpmdev-setuptree
 
-# use rpmbuild to build RPM package
 WORKDIR /root/rpmbuild
+# use rpmbuild to build RPM package
 COPY crystal.spec /root/rpmbuild/SPECS/
 
 ARG crystal_version=1.16.1
-ARG gc_version=8.2.8
 ARG shards_version=0.19.1
 ARG pkg_revision=1
+
+# Download sources
+ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz /root/rpmbuild/SOURCES/crystal.tar.gz
+ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.tar.gz /root/rpmbuild/SOURCES/shards.tar.gz
 
 # Build the RPM package
 RUN rpmbuild -bb SPECS/crystal.spec \
