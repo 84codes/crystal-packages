@@ -6,7 +6,7 @@ Homepage: https://crystal-lang.org
 
 Package: crystal
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, gcc, pkg-config, libpcre2-dev, libz-dev, libyaml
+Depends: ${misc:Depends}, ${shlibs:Depends}, gcc, pkg-config, libpcre2-dev, libz-dev
 Recommends: libssl-dev, libxml2-dev, libgmp-dev, libyaml-dev, git
 Description: a general-purpose, object-oriented programming language
  Crystal is a programming language with a syntax similar to Ruby but
