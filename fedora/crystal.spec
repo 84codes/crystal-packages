@@ -13,7 +13,7 @@ BuildRequires:  zlib-devel
 Requires:       gcc pkgconfig pcre2-devel gc-devel
 Requires:       gmp-devel openssl-devel libxml2-devel
 Requires:       libyaml-devel zlib-devel
-Requires:       llvm-libs libffi
+Requires:       llvm-libs libffi git
 
 Source0: crystal.tar.gz
 Source1: shards.tar.gz
