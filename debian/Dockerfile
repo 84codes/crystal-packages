@@ -1,14 +1,12 @@
 ARG base_image=debian
 ARG codename=bookworm
-ARG crystal_version=1.16.1
-ARG llvm_version=19
 
 # Copy the statically compiled compiler from this image
 FROM 84codes/crystal:latest-alpine AS alpine
 
 FROM $base_image:$codename AS builder
 # add dependencies required for building crystal from source
-ARG llvm_version
+ARG llvm_version=19
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y git gcc g++ pkg-config make \
@@ -19,50 +17,38 @@ RUN git config --global advice.detachedHead false
 COPY --from=alpine /usr/bin/shards /usr/bin/
 COPY --from=alpine /usr/bin/crystal /usr/bin/
 COPY --from=alpine /usr/share/crystal /usr/share/crystal
+WORKDIR /usr/src
 
 # build libgc
-WORKDIR /tmp/libgc
 ARG gc_version=8.2.8
-RUN git clone --depth=1 --single-branch --branch=v${gc_version} https://github.com/ivmai/bdwgc.git . && \
-  ./autogen.sh && \
-  ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
-  make -j$(nproc) $(shell dpkg-buildflags --export=cmdline) && \
-  make install
+ADD https://github.com/ivmai/bdwgc/archive/v${gc_version}.tar.gz bdwgc.tar.gz
+RUN tar zxf bdwgc.tar.gz && \
+    cd bdwgc-${gc_version} && \
+    ./autogen.sh && \
+    ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
+    make -j$(nproc) $(shell dpkg-buildflags --export=cmdline) && \
+    make install
 
 # Build crystal
-WORKDIR /tmp/crystal
-ARG crystal_version
-RUN git clone --depth=1 --single-branch --branch=$crystal_version https://github.com/crystal-lang/crystal.git . && \
-  gzip -9 man/crystal.1 && \
-  make crystal release=1 interpreter=1 PREFIX=/usr CRYSTAL_CONFIG_LIBRARY_PATH=/usr/lib/crystal LDFLAGS="$(dpkg-buildflags --get LDFLAGS)" && \
-  rm -f src/llvm/ext/llvm_ext.o
+ARG crystal_version=1.16.1
+ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz crystal.tar.gz
+RUN tar zxf crystal.tar.gz && \
+    cd crystal-${crystal_version} && \
+    make release=1 interpreter=1 PREFIX=/usr CRYSTAL_CONFIG_LIBRARY_PATH=/usr/lib/crystal LDFLAGS="$(dpkg-buildflags --get LDFLAGS)" && \
+    make install PREFIX=/usr DESTDIR=/tmp/crystal
 
 # Build shards
-WORKDIR /tmp/shards
 ARG shards_version=0.19.1
-RUN git clone --depth=1 --single-branch --branch=v${shards_version} https://github.com/crystal-lang/shards.git . && \
-  gzip -9 man/shards.1 man/shard.yml.5 && \
-  make bin/shards release=1 FLAGS="--link-flags=\"$(dpkg-buildflags --get LDFLAGS)\""
+ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.tar.gz shards.tar.gz
+RUN tar zxf shards.tar.gz && \
+    cd shards-${shards_version} && \
+  make release=1 FLAGS="--link-flags=\"$(dpkg-buildflags --get LDFLAGS)\"" && \
+  make install PREFIX=/usr DESTDIR=/tmp/crystal
 
 # Setup package source directory
-WORKDIR /tmp/pkg/crystal-${crystal_version}
-
+WORKDIR /tmp/crystal
+RUN install -D /usr/lib/libgc.a usr/lib/crystal/libgc.a
 COPY debian/ debian/
-# Create debian directory structure
-RUN mkdir -p usr/share/man/man1 \
-    usr/share/man/man5 \
-    usr/share/crystal \
-    usr/bin \
-    usr/lib/crystal
-
-# Copy files
-RUN cp /tmp/crystal/man/crystal.1.gz usr/share/man/man1/ && \
-    cp /tmp/shards/man/shards.1.gz usr/share/man/man1/ && \
-    cp /tmp/shards/man/shard.yml.5.gz usr/share/man/man5/ && \
-    cp -r /tmp/crystal/src usr/share/crystal/ && \
-    cp /tmp/crystal/.build/crystal usr/bin/ && \
-    cp /tmp/shards/bin/shards usr/bin/ && \
-    cp /usr/lib/libgc.a usr/lib/crystal/
 
 # Copy debian package files
 ARG pkg_revision=1
@@ -76,14 +62,14 @@ RUN debuild -us -uc -b
 
 # put .deb file in a scratch image for exporting
 FROM scratch AS pkgs
-COPY --from=builder /tmp/pkg/../*.deb .
+COPY --from=builder /tmp/crystal/../*.deb .
 
 # start from a clean image
 FROM $base_image:$codename
 # add dependencies commonly required for building crystal applications
-COPY --from=builder /tmp/pkg/*.deb .
+COPY --from=builder /tmp/*.deb .
 RUN apt-get update && \
-    apt-get install -y curl gnupg make ./*.deb && \
+    apt-get install -y curl gnupg ./*.deb && \
     rm -rf /var/lib/apt/lists/* ./*.deb
 # set the default cmd, example usage: docker run --rm 84codes/crystal eval 'puts "hello world"'
 ENTRYPOINT ["/usr/bin/crystal"]
