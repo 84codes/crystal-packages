@@ -1,0 +1,89 @@
+name: CentOS
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - README.md
+      - .github/workflows/master.yml
+
+env:
+  crystal_version: 1.16.1
+  shards_version: 0.19.1
+  gc_version: 8.2.8
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  centos:
+    name: CentOS Stream
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - base_image: quay.io/centos/centos
+            base_image_tag: stream9
+            el_version: 9
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: depot/setup-action@v1
+      - uses: depot/build-push-action@v1
+        name: Build and push container
+        with:
+          project: zjh7v82xv6
+          context: centos
+          pull: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            crystal_version=${{ env.crystal_version }}
+            shards_version=${{ env.shards_version }}
+            gc_version=${{ env.gc_version }}
+            llvm_version=${{ matrix.llvm_version }}
+            base_image=${{ matrix.base_image }}
+            base_image_tag=${{ matrix.base_image_tag }}
+            pkg_revision=${{ github.run_number }}
+          tags: |
+            84codes/crystal:${{ env.crystal_version }}-centos-${{ matrix.base_image_tag }}
+            84codes/crystal:${{ env.crystal_version }}-el-${{ matrix.el_version }}
+            84codes/crystal:latest-centos-${{ matrix.base_image_tag }}
+            84codes/crystal:latest-el-${{ matrix.el_version }}
+          push: ${{ github.ref == 'refs/heads/main' }}
+      - uses: depot/build-push-action@v1
+        name: Export packages
+        with:
+          project: zjh7v82xv6
+          context: centos
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            crystal_version=${{ env.crystal_version }}
+            shards_version=${{ env.shards_version }}
+            gc_version=${{ env.gc_version }}
+            llvm_version=${{ matrix.llvm_version }}
+            base_image=${{ matrix.base_image }}
+            base_image_tag=${{ matrix.base_image_tag }}
+            pkg_revision=${{ github.run_number }}
+          target: pkgs
+          outputs: pkgs
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: crystal-centos-${{ matrix.base_image_tag }}-pkgs
+          path: pkgs
+      - name: Upload to Packagecloud
+        run: .github/scripts/upload-to-packagecloud.sh rpm "el/${{ matrix.el_version }}"
+        env:
+          PACKAGECLOUD_TOKEN: ${{ secrets.packagecloud_token }}
+        if: ${{ github.ref == 'refs/heads/main' }}

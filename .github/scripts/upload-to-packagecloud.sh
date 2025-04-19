@@ -18,11 +18,7 @@ if [ ! -f distributions.json ]; then
 fi
 
 # Get distribution ID
-if [ "$PKG_TYPE" == "deb" ]; then
-  DIST_ID=$(jq ".deb[] | select(.index_name == \"$DIST_NAME\").versions[] | select(.index_name == \"$DIST_VERSION\").id" distributions.json)
-else
-  DIST_ID=$(jq ".rpm[] | select(.index_name == \"$DIST_NAME\").versions[] | select(.index_name == \"$DIST_VERSION\").id" distributions.json)
-fi
+DIST_ID=$(jq ".${PKG_TYPE}[] | select(.index_name == \"$DIST_NAME\").versions[] | select(.index_name == \"$DIST_VERSION\").id" distributions.json)
 
 # Find and upload packages
 find pkgs -name "*.$PKG_TYPE" | xargs -I{} curl -fsSu "$PACKAGECLOUD_TOKEN:" \
