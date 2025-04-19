@@ -7,13 +7,10 @@ FROM 84codes/crystal:latest-alpine AS alpine
 FROM $base_image:$base_image_tag AS builder
 # add dependencies required for building crystal from source
 RUN dnf install -y --nodocs --repo=fedora,updates \
-        git gcc gcc-c++ make gc-devel \
-        llvm-devel \
-        pcre2-devel libxml2-devel libyaml-devel libffi-devel \
-        openssl-devel zlib-devel gmp-devel autoconf automake libtool \
+        git gcc gcc-c++ make gc-devel llvm-devel \
+        pcre2-devel libyaml-devel libffi-devel \
         rpm-build rpmdevtools && \
     dnf clean all
-RUN git config --global advice.detachedHead false
 
 # Use static compiler to compile crystal
 COPY --from=alpine /usr/bin/shards /usr/bin/
@@ -28,15 +25,18 @@ WORKDIR /root/rpmbuild
 COPY crystal.spec /root/rpmbuild/SPECS/
 
 ARG crystal_version=1.16.1
-ARG gc_version=8.2.8
 ARG shards_version=0.19.1
 ARG pkg_revision=1
+
+# Download sources
+ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz /root/rpmbuild/SOURCES/crystal.tar.gz
+ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.tar.gz /root/rpmbuild/SOURCES/shards.tar.gz
 
 # Build the RPM package
 RUN rpmbuild -bb SPECS/crystal.spec \
     --define "crystal_version $crystal_version" \
-    --define "gc_version $gc_version" \
-    --define "shards_version $shards_version"
+    --define "shards_version $shards_version" \
+    --define "release ${pkg_revision}%{?dist}"
 
 # put .rpm file in a scratch image for exporting
 FROM scratch AS pkgs
