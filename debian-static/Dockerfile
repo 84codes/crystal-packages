@@ -48,9 +48,8 @@ ARG TARGETARCH
 RUN fpm -s dir -t deb -n crystal -v $(cat pkg/usr/share/crystal/src/VERSION) --iteration ${pkg_revision} -a ${TARGETARCH} \
   --url https://crystal-lang.org --maintainer "84codes <contact@84codes.com>" \
   --description "a general-purpose, object-oriented programming language" \
-  --depends gcc --depends pkg-config --depends libevent-dev \
-  --depends libpcre2-dev \
-  --depends libz-dev \
+  --depends gcc --depends pkg-config \
+  --depends libpcre2-dev --depends libz-dev \
   --deb-recommends libssl-dev --deb-recommends libxml2-dev \
   --deb-recommends libgmp-dev --deb-recommends libyaml-dev \
   --deb-recommends git \
