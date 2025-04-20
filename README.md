@@ -23,7 +23,7 @@ RUN shards build --release --no-debug
 FROM ubuntu:22.04
 # install required dependencies
 RUN apt-get update && \
-    apt-get install -y libssl3 libevent-2.1-7 && \
+    apt-get install -y libssl3 && \
     apt-get clean && \
     rm -rf /var/cache/apt/* /var/lib/apt/lists/* /var/cache/debconf/* /var/log/*
 # copy the compiled binary from the build stage
@@ -43,12 +43,10 @@ RUN shards install --production
 # Copy the rest of the code
 COPY src/ src/
 # Build a static binary
-RUN shards build --release --production --static --no-debug
+RUN shards build --release --static
 
 # The scratch image is completely empty
 FROM scratch
-# Don't run as root
-USER 2:2
 # Copy only the binary from the build stage
 COPY --from=builder /tmp/bin/* /
 # Install a CA store, only needed if the application verifies TLS peers (eg. talk to a https server)
@@ -68,8 +66,9 @@ We keep up with new releases of Alpine, Ubuntu, Debian and Fedora.
 - Debian 10
 - Debian 11
 - Debian 12
-- Fedora 39
 - Fedora 40
+- Fedora 41
+- Fedora 42
 
 ## Supported Crystal version(s)
 
