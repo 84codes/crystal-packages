@@ -36,7 +36,7 @@ ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.
 RUN rpmbuild -bb SPECS/crystal.spec \
     --define "crystal_version $crystal_version" \
     --define "shards_version $shards_version" \
-    --define "release ${pkg_revision}%{?dist}"
+    --define "pkg_revision $pkg_revision"
 
 # put .rpm file in a scratch image for exporting
 FROM scratch AS pkgs

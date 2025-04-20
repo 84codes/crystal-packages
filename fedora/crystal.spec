@@ -1,6 +1,6 @@
 Name:           crystal
 Version:        %{getenv:crystal_version}
-Release:        1%{?dist}
+Release:        %{getenv:pkg_revision}%{?dist}
 Summary:        A general-purpose, object-oriented programming language
 License:        Apache-2.0
 URL:            https://crystal-lang.org
@@ -11,13 +11,11 @@ Packager:       84codes <contact@84codes.com>
 BuildRequires:  git gcc gcc-c++ make gc-devel llvm-devel
 BuildRequires:  pcre2-devel libyaml-devel libffi-devel
 
-Requires:       gcc pkgconfig llvm-libs gc-devel
+Requires:       gcc pkgconfig gc-devel
 Requires:       pcre2-devel openssl-devel zlib-devel
 Requires:       libyaml-devel libxml2-devel gmp-devel
 # Commonly used by shards
 Requires:       git make
-# For the interpreter
-Requires:       libffi
 
 Source0: crystal.tar.gz
 Source1: shards.tar.gz
