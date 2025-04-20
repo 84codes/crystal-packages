@@ -162,6 +162,7 @@ jobs:
             base_image=${{ matrix.base_image }}
             codename=${{ matrix.codename }}
             llvm_version=${{ matrix.llvm_version }}
+            pkg_revision=${{ github.run_number }}
           tags: |
             84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.version }}
             84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.codename }}
@@ -208,6 +209,7 @@ jobs:
             base_image=${{ matrix.base_image }}
             codename=${{ matrix.codename }}
             llvm_version=${{ matrix.llvm_version }}
+            pkg_revision=${{ github.run_number }}
           tags: |
             84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.version }}
             84codes/crystal:latest-${{ matrix.base_image }}-${{ matrix.version }}
