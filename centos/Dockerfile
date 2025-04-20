@@ -17,7 +17,6 @@ RUN dnf install -y --nodocs --enablerepo=crb \
 COPY --from=alpine /usr/bin/shards /usr/bin/
 COPY --from=alpine /usr/bin/crystal /usr/bin/
 COPY --from=alpine /usr/share/crystal /usr/share/crystal
-COPY --from=alpine /usr/share/doc/crystal /usr/share/doc/crystal
 COPY --from=alpine /usr/share/man/man1/crystal.1.gz /usr/share/man/man1/
 COPY --from=alpine /usr/share/man/man1/shards.1.gz /usr/share/man/man1/
 COPY --from=alpine /usr/share/man/man5/shard.yml.5.gz /usr/share/man/man5/
@@ -74,7 +73,6 @@ RUN dnf install -y --nodocs \
 # build distribution packages
 WORKDIR /tmp/pkg
 # copy the binaries + stdlib + libgc from the build stage
-COPY --from=builder /tmp/crystal/*.md pkg/usr/share/doc/crystal/
 COPY --from=builder /tmp/crystal/man/crystal.1.gz pkg/usr/share/man/man1/
 COPY --from=builder /tmp/shards/man/shards.1.gz pkg/usr/share/man/man1/
 COPY --from=builder /tmp/shards/man/shard.yml.5.gz pkg/usr/share/man/man5/

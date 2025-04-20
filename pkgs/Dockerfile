@@ -21,7 +21,6 @@ WORKDIR /tmp/pkg
 COPY --from=alpine /usr/bin/shards pkg/usr/bin/
 COPY --from=alpine /usr/bin/crystal pkg/usr/bin/
 COPY --from=alpine /usr/share/crystal pkg/usr/share/crystal
-COPY --from=alpine /usr/share/doc/crystal pkg/usr/share/doc/crystal
 COPY --from=alpine /usr/share/man/man1/crystal.1.gz pkg/usr/share/man/man1/
 COPY --from=alpine /usr/share/man/man1/shards.1.gz pkg/usr/share/man/man1/
 COPY --from=alpine /usr/share/man/man5/shard.yml.5.gz pkg/usr/share/man/man5/
