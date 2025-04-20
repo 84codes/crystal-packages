@@ -166,6 +166,8 @@ jobs:
           tags: |
             84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.version }}
             84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.codename }}
+            84codes/crystal:latest-${{ matrix.base_image }}-${{ matrix.version }}
+            84codes/crystal:latest-${{ matrix.base_image }}-${{ matrix.codename }}
       - name: Upload to Packagecloud
         run: .github/scripts/upload-to-packagecloud.sh deb "${{ matrix.base_image }}/${{ matrix.codename }}"
         env:
