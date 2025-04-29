@@ -10,9 +10,8 @@ ARG llvm_version=19
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y git gcc g++ pkg-config make \
-    libpcre2-dev libevent-dev libssl-dev libgmp-dev libyaml-dev libxml2-dev zlib1g-dev llvm-$llvm_version-dev \
+    libpcre2-dev libyaml-dev zlib1g-dev llvm-$llvm_version-dev \
     autoconf automake libtool libffi-dev devscripts debhelper dh-make
-RUN git config --global advice.detachedHead false
 
 COPY --from=alpine /usr/bin/shards /usr/bin/
 COPY --from=alpine /usr/bin/crystal /usr/bin/
@@ -34,7 +33,7 @@ ARG crystal_version=1.16.1
 ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz crystal.tar.gz
 RUN tar zxf crystal.tar.gz && \
     cd crystal-${crystal_version} && \
-    make release=1 interpreter=1 PREFIX=/usr CRYSTAL_CONFIG_LIBRARY_PATH=/usr/lib/crystal LDFLAGS="$(dpkg-buildflags --get LDFLAGS)" && \
+    make release=1 interpreter=1 CRYSTAL_CONFIG_LIBRARY_PATH=/usr/lib/crystal LDFLAGS="$(dpkg-buildflags --get LDFLAGS)" && \
     make install PREFIX=/usr DESTDIR=/tmp/crystal
 
 # Build shards
@@ -42,8 +41,8 @@ ARG shards_version=0.19.1
 ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.tar.gz shards.tar.gz
 RUN tar zxf shards.tar.gz && \
     cd shards-${shards_version} && \
-  make release=1 FLAGS="--link-flags=\"$(dpkg-buildflags --get LDFLAGS)\"" && \
-  make install PREFIX=/usr DESTDIR=/tmp/crystal
+    make release=1 FLAGS="--link-flags=\"$(dpkg-buildflags --get LDFLAGS)\"" && \
+    make install PREFIX=/usr DESTDIR=/tmp/crystal
 
 # Setup package source directory
 WORKDIR /tmp/crystal
