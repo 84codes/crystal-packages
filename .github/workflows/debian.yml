@@ -1,0 +1,105 @@
+name: Debian
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - README.md
+      - .github/workflows/master.yml
+  schedule:
+    - cron: '45 4 * * *'
+
+env:
+  crystal_version: 1.16.3
+  shards_version: 0.19.1
+  gc_version: 8.2.8
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  debian:
+    name: Debian
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    strategy:
+      max-parallel: 2
+      fail-fast: false
+      matrix:
+        include:
+          - base_image: ubuntu
+            version: 24.04
+            codename: noble
+            llvm_version: 18
+          - base_image: ubuntu
+            version: 22.04
+            codename: jammy
+            llvm_version: 15
+          - base_image: debian
+            version: 12
+            codename: bookworm
+            llvm_version: 19
+          - base_image: debian
+            version: 11
+            codename: bullseye
+            llvm_version: 16
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: depot/setup-action@v1
+      - name: Export packages
+        uses: depot/build-push-action@v1
+        with:
+          project: zjh7v82xv6
+          context: debian
+          pull: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            crystal_version=${{ env.crystal_version }}
+            shards_version=${{ env.shards_version }}
+            gc_version=${{ env.gc_version }}
+            base_image=${{ matrix.base_image }}
+            codename=${{ matrix.codename }}
+            llvm_version=${{ matrix.llvm_version }}
+            pkg_revision=${{ github.run_number }}
+          target: pkgs
+          outputs: pkgs
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: crystal-${{ matrix.base_image }}-${{ matrix.version }}-pkgs
+          path: pkgs
+      - name: Build and push container
+        uses: depot/build-push-action@v1
+        with:
+          project: zjh7v82xv6
+          context: debian
+          push: ${{ github.ref == 'refs/heads/main' }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            crystal_version=${{ env.crystal_version }}
+            shards_version=${{ env.shards_version }}
+            gc_version=${{ env.gc_version }}
+            base_image=${{ matrix.base_image }}
+            codename=${{ matrix.codename }}
+            llvm_version=${{ matrix.llvm_version }}
+            pkg_revision=${{ github.run_number }}
+          tags: |
+            84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.version }}
+            84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.codename }}
+            84codes/crystal:latest-${{ matrix.base_image }}-${{ matrix.version }}
+            84codes/crystal:latest-${{ matrix.base_image }}-${{ matrix.codename }}
+      - name: Upload to Packagecloud
+        run: .github/scripts/upload-to-packagecloud.sh deb "${{ matrix.base_image }}/${{ matrix.codename }}"
+        env:
+          PACKAGECLOUD_TOKEN: ${{ secrets.packagecloud_token }}
+        if: ${{ github.ref == 'refs/heads/main' }}

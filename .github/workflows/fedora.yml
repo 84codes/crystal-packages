@@ -1,0 +1,91 @@
+name: Fedora
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - README.md
+      - .github/workflows/master.yml
+  schedule:
+    - cron: '45 4 * * *'
+
+env:
+  crystal_version: 1.16.3
+  shards_version: 0.19.1
+  gc_version: 8.2.8
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  fedora:
+    name: Fedora
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        include:
+          - base_image: fedora
+            base_image_tag: 40
+          - base_image: fedora
+            base_image_tag: 41
+          - base_image: fedora
+            base_image_tag: 42
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: depot/setup-action@v1
+      - uses: depot/build-push-action@v1
+        name: Build and push container
+        with:
+          project: zjh7v82xv6
+          context: fedora
+          pull: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            crystal_version=${{ env.crystal_version }}
+            shards_version=${{ env.shards_version }}
+            gc_version=${{ env.gc_version }}
+            base_image=${{ matrix.base_image }}
+            base_image_tag=${{ matrix.base_image_tag }}
+            pkg_revision=${{ github.run_number }}
+          tags: |
+            84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.base_image_tag }}
+            84codes/crystal:latest-${{ matrix.base_image }}-${{ matrix.base_image_tag }}
+          push: ${{ github.ref == 'refs/heads/main' }}
+      - uses: depot/build-push-action@v1
+        name: Export packages
+        with:
+          project: zjh7v82xv6
+          context: fedora
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            crystal_version=${{ env.crystal_version }}
+            shards_version=${{ env.shards_version }}
+            gc_version=${{ env.gc_version }}
+            base_image=${{ matrix.base_image }}
+            base_image_tag=${{ matrix.base_image_tag }}
+            pkg_revision=${{ github.run_number }}
+          target: pkgs
+          outputs: pkgs
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: crystal-${{ matrix.base_image }}-${{ matrix.base_image_tag }}-pkgs
+          path: pkgs
+      - name: Upload to Packagecloud
+        run: .github/scripts/upload-to-packagecloud.sh rpm "${{ matrix.base_image }}/${{ matrix.base_image_tag }}"
+        env:
+          PACKAGECLOUD_TOKEN: ${{ secrets.packagecloud_token }}
+        if: ${{ github.ref == 'refs/heads/main' }}
