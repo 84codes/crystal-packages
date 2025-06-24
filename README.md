@@ -88,8 +88,8 @@ For best performance use dynamically built packages, they link to the distributi
 curl -fsSL https://packagecloud.io/84codes/crystal/gpgkey | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/84codes_crystal.gpg
 . /etc/os-release
 echo "deb https://packagecloud.io/84codes/crystal/$ID $VERSION_CODENAME main" | sudo tee /etc/apt/sources.list.d/84codes_crystal.list
-apt-get update
-apt-get install crystal
+sudo apt-get update
+sudo apt-get install crystal
 ```
 
 #### Dynamically linked binaries for recent and current Fedora versions
@@ -111,8 +111,8 @@ sudo dnf install crystal
 ```sh
 curl -fsSL https://packagecloud.io/84codes/crystal/gpgkey | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/84codes_crystal.gpg
 echo "deb https://packagecloud.io/84codes/crystal/any any main" | sudo tee /etc/apt/sources.list.d/84codes_crystal.list
-apt-get update
-apt-get install crystal
+sudo apt-get update
+sudo apt-get install crystal
 ```
 
 #### Any RPM based distributions
