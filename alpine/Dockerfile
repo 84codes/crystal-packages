@@ -1,7 +1,7 @@
 ARG alpine_version=latest
 
 FROM alpine:$alpine_version AS builder
-ARG llvm_version=18
+ARG llvm_version=20
 # add dependencies required for building crystal from source
 RUN apk add --update --no-cache \
     crystal shards \
@@ -22,7 +22,7 @@ RUN tar zxf bdwgc.tar.gz && \
     make install
 
 # Build crystal
-ARG crystal_version=1.16.1
+ARG crystal_version=1.17.0
 ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz crystal.tar.gz
 RUN tar zxf crystal.tar.gz && \
     cd crystal-${crystal_version} && \
