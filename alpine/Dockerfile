@@ -6,7 +6,7 @@ ARG llvm_version=20
 RUN apk add --update --no-cache \
     crystal shards \
     llvm${llvm_version}-dev llvm${llvm_version}-static \
-    zlib-static yaml-static pcre2-dev zstd-static libxml2-static \
+    zlib-static yaml-static pcre2-dev zstd-static libxml2-static pcre2-static \
     libffi-dev git g++ make automake libtool autoconf curl abuild asciidoctor
 
 WORKDIR /usr/src
@@ -43,7 +43,7 @@ RUN tar zxf shards.tar.gz && \
 # start from a clean image
 FROM alpine:$alpine_version
 # add dependencies commonly required for building crystal applications
-RUN apk add --update --no-cache musl-dev gcc pcre2-dev openssl-dev openssl-libs-static libxml2-dev zlib-dev zlib-static git make yaml-dev libxml2-static gmp-dev xz-static yaml-static
+RUN apk add --update --no-cache musl-dev gcc pcre2-dev openssl-dev openssl-libs-static libxml2-dev zlib-dev zlib-static git make yaml-dev libxml2-static gmp-dev xz-static yaml-static pcre2-static
 # copy the binaries + stdlib + libgc from the build stage
 COPY --from=builder /usr/share/man/man1/crystal.1.gz /usr/share/man/man1/
 COPY --from=builder /usr/share/man/man1/shards.1.gz /usr/share/man/man1/
