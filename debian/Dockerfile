@@ -1,5 +1,5 @@
 ARG base_image=debian
-ARG codename=bookworm
+ARG codename=trixie
 
 # Copy the statically compiled compiler from this image
 FROM 84codes/crystal:latest-alpine AS alpine
@@ -29,7 +29,7 @@ RUN tar zxf bdwgc.tar.gz && \
     make install
 
 # Build crystal
-ARG crystal_version=1.16.1
+ARG crystal_version=1.18.0
 ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz crystal.tar.gz
 RUN tar zxf crystal.tar.gz && \
     cd crystal-${crystal_version} && \

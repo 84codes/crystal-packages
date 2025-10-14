@@ -109,6 +109,10 @@ jobs:
             codename: jammy
             llvm_version: 15
           - base_image: debian
+            version: 13
+            codename: trixie
+            llvm_version: 19
+          - base_image: debian
             version: 12
             codename: bookworm
             llvm_version: 19
