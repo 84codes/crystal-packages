@@ -29,7 +29,7 @@ RUN tar zxf bdwgc.tar.gz && \
     make install
 
 # Build crystal
-ARG crystal_version=1.18.1
+ARG crystal_version=1.19.0
 ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz crystal.tar.gz
 RUN tar zxf crystal.tar.gz && \
     cd crystal-${crystal_version} && \
@@ -37,7 +37,7 @@ RUN tar zxf crystal.tar.gz && \
     make install PREFIX=/usr DESTDIR=/tmp/crystal
 
 # Build shards
-ARG shards_version=0.19.1
+ARG shards_version=0.20.0
 ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.tar.gz shards.tar.gz
 RUN tar zxf shards.tar.gz && \
     cd shards-${shards_version} && \

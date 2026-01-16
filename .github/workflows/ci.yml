@@ -12,9 +12,9 @@ on:
     - cron: '45 4 * * *'
 
 env:
-  crystal_version: 1.18.2
-  shards_version: 0.19.1
-  gc_version: 8.2.8
+  crystal_version: 1.19.0
+  shards_version: 0.20.0
+  gc_version: 8.2.10
 
 permissions:
   contents: read
