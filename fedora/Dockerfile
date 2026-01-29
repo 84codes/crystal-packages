@@ -29,7 +29,8 @@ ARG shards_version=0.20.0
 ARG pkg_revision=1
 
 # Download sources
-ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz /root/rpmbuild/SOURCES/crystal.tar.gz
+ARG crystal_src_url=https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz
+ADD ${crystal_src_url} /root/rpmbuild/SOURCES/crystal.tar.gz
 ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.tar.gz /root/rpmbuild/SOURCES/shards.tar.gz
 
 # Build the RPM package

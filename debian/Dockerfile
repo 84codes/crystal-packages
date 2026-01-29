@@ -30,7 +30,8 @@ RUN tar zxf bdwgc.tar.gz && \
 
 # Build crystal
 ARG crystal_version=1.19.1
-ADD https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz crystal.tar.gz
+ARG crystal_src_url=https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz
+ADD ${crystal_src_url} crystal.tar.gz
 RUN tar zxf crystal.tar.gz && \
     cd crystal-${crystal_version} && \
     make release=1 interpreter=1 CRYSTAL_CONFIG_LIBRARY_PATH=/usr/lib/crystal LDFLAGS="$(dpkg-buildflags --get LDFLAGS)" && \
