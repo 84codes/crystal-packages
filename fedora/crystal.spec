@@ -1,5 +1,5 @@
 Name:           crystal
-Version:        %{getenv:crystal_version}
+Version:        %(echo %{getenv:crystal_version} | tr '-' '.')
 Release:        %{getenv:pkg_revision}%{?dist}
 Summary:        A general-purpose, object-oriented programming language
 License:        Apache-2.0
@@ -29,7 +29,7 @@ Crystal is a programming language with the following goals:
 - Compile to efficient native code
 
 %prep
-%setup -q -b 1
+%setup -q -n crystal-%{getenv:crystal_version} -b 1
 
 %build
 # Build Crystal
