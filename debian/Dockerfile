@@ -54,7 +54,8 @@ COPY debian/ debian/
 ARG pkg_revision=1
 
 # Update version and llvm version in control file
-RUN sed -i "s/\${crystal_version}/${crystal_version}/g; s/\${pkg_revision}/${pkg_revision}/g; s/\$(date -R)/$(date -R)/g" debian/changelog && \
+RUN deb_version=$(echo "${crystal_version}" | sed 's/^[^0-9]/0~/; s/-/./g') && \
+    sed -i "s/\${crystal_version}/${deb_version}/g; s/\${pkg_revision}/${pkg_revision}/g; s/\$(date -R)/$(date -R)/g" debian/changelog && \
     sed -i "s/\$(date +%Y)/$(date +%Y)/g" debian/copyright
 
 # Build the package
