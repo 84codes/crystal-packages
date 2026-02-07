@@ -101,6 +101,10 @@ jobs:
       matrix:
         include:
           - base_image: ubuntu
+            version: 26.04
+            codename: resolute
+            llvm_version: 21
+          - base_image: ubuntu
             version: 24.04
             codename: noble
             llvm_version: 18
@@ -259,11 +263,11 @@ jobs:
       matrix:
         include:
           - base_image: fedora
-            base_image_tag: 41
-          - base_image: fedora
             base_image_tag: 42
           - base_image: fedora
             base_image_tag: 43
+          - base_image: fedora
+            base_image_tag: 44
     steps:
       - name: Checkout
         uses: actions/checkout@v4
