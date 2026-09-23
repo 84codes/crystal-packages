@@ -120,10 +120,6 @@ jobs:
             version: 12
             codename: bookworm
             llvm_version: 19
-          - base_image: debian
-            version: 11
-            codename: bullseye
-            llvm_version: 16
     steps:
       - name: Checkout
         uses: actions/checkout@v5

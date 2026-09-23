@@ -57,18 +57,20 @@ ENTRYPOINT ["/myapp"]
 
 ## Supported OSes and versions
 
-We keep up with new releases of Alpine, Ubuntu, Debian and Fedora.
+We keep up with new releases of Alpine, Ubuntu, Debian, Fedora and CentOS Stream.
 
 - Alpine latest
-- Ubuntu 20.04
 - Ubuntu 22.04
 - Ubuntu 24.04
-- Debian 10
-- Debian 11
+- Ubuntu 26.04
 - Debian 12
-- Fedora 40
-- Fedora 41
-- Fedora 42
+- Debian 13
+- Fedora 43
+- Fedora 44
+- Fedora 45
+- CentOS Stream 9
+
+Ubuntu 20.04 is covered by the statically linked packages only.
 
 ## Supported Crystal version(s)
 
