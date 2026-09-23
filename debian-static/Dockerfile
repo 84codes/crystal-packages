@@ -26,7 +26,7 @@ COPY --from=alpine /usr/share/man/man1/shards.1.gz /usr/share/man/man1/
 COPY --from=alpine /usr/share/man/man5/shard.yml.5.gz /usr/share/man/man5/
 
 # build deb package
-FROM --platform=$BUILDPLATFORM debian:11 AS pkg-builder
+FROM --platform=$BUILDPLATFORM debian:12 AS pkg-builder
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y ruby binutils \

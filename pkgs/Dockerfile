@@ -3,7 +3,7 @@ ARG crystal_version=1.16.1
 FROM 84codes/crystal:${crystal_version}-alpine-latest AS alpine
 
 # build deb and rpm packages
-FROM debian:11 AS pkg-builder
+FROM debian:12 AS pkg-builder
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y git gcc g++ make libc-dev autoconf automake libtool ruby rpm binutils \
