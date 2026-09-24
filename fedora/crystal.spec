@@ -12,11 +12,11 @@ BuildRequires:  git gcc gcc-c++ make gc-devel llvm-devel
 BuildRequires:  pcre2-devel libyaml-devel libffi-devel
 BuildRequires:  asciidoctor
 
-Requires:       gcc pkgconfig gc-devel
-Requires:       pcre2-devel openssl-devel zlib-devel
-Requires:       libyaml-devel libxml2-devel gmp-devel
+Requires:       gcc pkgconfig gc-devel pcre2-devel
+Recommends:     openssl-devel zlib-devel
+Recommends:     libyaml-devel libxml2-devel gmp-devel
 # Commonly used by shards
-Requires:       git make
+Recommends:     git make
 
 Source0: crystal.tar.gz
 Source1: shards.tar.gz
