@@ -68,9 +68,11 @@ COPY --from=builder /tmp/crystal/../*.deb .
 # start from a clean image
 FROM $base_image:$codename
 # add dependencies commonly required for building crystal applications
+# and the Recommends from the crystal package
 COPY --from=builder /tmp/*.deb .
 RUN apt-get update && \
     apt-get install -y curl gnupg ./*.deb && \
+    apt-get install -y $(dpkg-query --showformat='${Recommends}' --show crystal | sed 's/,/ /g') && \
     rm -rf /var/lib/apt/lists/* ./*.deb
 # set the default cmd, example usage: docker run --rm 84codes/crystal eval 'puts "hello world"'
 ENTRYPOINT ["/usr/bin/crystal"]
