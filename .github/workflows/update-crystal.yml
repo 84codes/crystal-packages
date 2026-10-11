@@ -1,0 +1,65 @@
+name: Update Crystal version
+
+# Watches crystal-lang/crystal for a new stable release and opens a PR bumping
+# crystal_version in ci.yml. Merging it to main builds and publishes the images
+# and packages (see ci.yml).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-crystal
+
+jobs:
+  update:
+    name: Check for new Crystal release
+    runs-on: ubuntu-latest
+    env:
+      # Pushes/PRs made with the default GITHUB_TOKEN don't trigger other
+      # workflows, so CI and the release build need a PAT or GitHub App token
+      # stored as the RELEASE_BOT_TOKEN secret. Falls back to GITHUB_TOKEN
+      # (PR is still created, but CI has to be started manually).
+      GH_TOKEN: ${{ secrets.RELEASE_BOT_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ env.GH_TOKEN }}
+      - name: Find latest stable Crystal release
+        id: latest
+        run: |
+          # releases/latest skips drafts and prereleases
+          tag=$(gh api repos/crystal-lang/crystal/releases/latest --jq .tag_name)
+          version=${tag#v}
+          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Unexpected tag: $tag"; exit 1; }
+          current=$(sed -nE 's/^  crystal_version: ([0-9.]+)$/\1/p' .github/workflows/ci.yml)
+          echo "latest=$version current=$current"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          newest=$(printf '%s\n%s\n' "$version" "$current" | sort -V | tail -n1)
+          if [ "$version" != "$current" ] && [ "$newest" = "$version" ]; then
+            echo "update=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Open pull request
+        if: steps.latest.outputs.update == 'true'
+        env:
+          VERSION: ${{ steps.latest.outputs.version }}
+        run: |
+          branch="update-crystal-$VERSION"
+          if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
+            echo "PR for $VERSION already open"; exit 0
+          fi
+          sed -i -E "s/^  crystal_version: [0-9.]+$/  crystal_version: $VERSION/" .github/workflows/ci.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git commit -am "Crystal $VERSION"
+          git push --force origin "$branch"
+          url=$(gh pr create --base main --head "$branch" \
+            --title "Crystal $VERSION" \
+            --body "Crystal [$VERSION](https://github.com/crystal-lang/crystal/releases/tag/$VERSION) was released. Merging builds and publishes the new images and packages.")
+          gh pr merge "$url" --auto --squash || echo "Auto-merge not available, merge manually"
