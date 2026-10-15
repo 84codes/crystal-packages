@@ -5,6 +5,7 @@ ARG codename=trixie
 FROM 84codes/crystal:latest-alpine AS alpine
 
 FROM $base_image:$codename AS builder
+ARG codename
 # add dependencies required for building crystal from source
 ARG llvm_version=19
 ARG DEBIAN_FRONTEND=noninteractive
@@ -32,8 +33,13 @@ RUN tar zxf bdwgc.tar.gz && \
 ARG crystal_version=1.21.1
 ARG crystal_src_url=https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz
 ADD ${crystal_src_url} crystal.tar.gz
+# jammy's PCRE2 10.39 doesn't support the binary Unicode property used by Markd
 RUN tar zxf crystal.tar.gz && \
     cd crystal-${crystal_version} && \
+    if [ "$codename" = jammy ]; then \
+      grep -q 'Emoji_Presentation' lib/markd/src/markd/rule.cr && \
+      sed -i 's/\\p{Emoji_Presentation}//g' lib/markd/src/markd/rule.cr; \
+    fi && \
     make release=1 interpreter=1 CRYSTAL_CONFIG_LIBRARY_PATH=/usr/lib/crystal LDFLAGS="$(dpkg-buildflags --get LDFLAGS)" && \
     make install PREFIX=/usr DESTDIR=/tmp/crystal
 
@@ -74,5 +80,6 @@ RUN apt-get update && \
     apt-get install -y curl gnupg ./*.deb && \
     apt-get install -y $(dpkg-query --showformat='${Recommends}' --show crystal | sed 's/,/ /g') && \
     rm -rf /var/lib/apt/lists/* ./*.deb
+RUN crystal eval 'puts 1'
 # set the default cmd, example usage: docker run --rm 84codes/crystal eval 'puts "hello world"'
 ENTRYPOINT ["/usr/bin/crystal"]
