@@ -9,7 +9,7 @@ FROM --platform=$BUILDPLATFORM $base_image:$base_image_tag AS builder
 ARG llvm_version
 # add dependencies required for building crystal from source
 RUN dnf install -y --nodocs --enablerepo=crb \
-        git gcc gcc-c++ make \
+        git gcc gcc-c++ make libevent-devel \
         llvm${llvm_version}-devel \
         pcre2-devel libxml2-devel libyaml-devel \
         zlib-devel autoconf automake libtool ruby && \
@@ -54,7 +54,7 @@ RUN git clone --depth=1 --single-branch --branch=v${shards_version} https://gith
 FROM $base_image:$base_image_tag AS target-builder
 ARG llvm_version
 RUN dnf install -y --nodocs --enablerepo=crb \
-        git gcc gcc-c++ make \
+        git gcc gcc-c++ make libevent-devel \
         llvm${llvm_version}-devel \
         pcre2-devel libxml2-devel libyaml-devel libffi-devel \
         openssl-devel zlib-devel gmp-devel autoconf automake libtool && \
@@ -102,6 +102,7 @@ RUN fpm -s dir -t rpm -n crystal -v $(sed 's/-/~/' pkg/usr/share/crystal/src/VER
   --depends gcc --depends pkgconfig \
   --depends pcre2-devel \
   --depends llvm${llvm_version}-libs --depends libffi --depends libxml2 --depends libyaml \
+  --rpm-tag "Recommends: libevent-devel" \
   --rpm-tag "Recommends: gmp-devel" \
   --rpm-tag "Recommends: openssl-devel" \
   --rpm-tag "Recommends: libxml2-devel" \
