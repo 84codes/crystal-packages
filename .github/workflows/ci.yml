@@ -329,8 +329,6 @@ jobs:
           - base_image: almalinux
             base_image_tag: 9
             el_version: 9
-            # keep updating the tag the CentOS Stream 9 builds used to push
-            legacy_tag: centos-stream9
           - base_image: almalinux
             base_image_tag: 10
             el_version: 10
@@ -364,8 +362,6 @@ jobs:
             84codes/crystal:${{ env.crystal_version }}-el-${{ matrix.el_version }}
             84codes/crystal:latest-almalinux-${{ matrix.base_image_tag }}
             84codes/crystal:latest-el-${{ matrix.el_version }}
-            ${{ matrix.legacy_tag && format('84codes/crystal:{0}-{1}', env.crystal_version, matrix.legacy_tag) || '' }}
-            ${{ matrix.legacy_tag && format('84codes/crystal:latest-{0}', matrix.legacy_tag) || '' }}
           push: ${{ github.ref == 'refs/heads/main' }}
       - uses: depot/build-push-action@v1
         name: Export packages
