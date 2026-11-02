@@ -1,5 +1,5 @@
-ARG base_image=quay.io/centos/centos
-ARG base_image_tag=stream9
+ARG base_image=almalinux
+ARG base_image_tag=9
 ARG crystal_version=1.21.1
 
 # Copy the statically compiled compiler from this image
@@ -14,9 +14,9 @@ RUN dnf install -y --nodocs --enablerepo=crb \
         pcre2-devel libxml2-devel libyaml-devel \
         zlib-devel autoconf automake libtool ruby && \
     dnf clean all
-# asciidoctor generates the man pages, it's not packaged in EL9 (only in EPEL)
+# asciidoctor generates the man pages, it's not packaged in EL (only in EPEL)
 RUN gem install --no-document asciidoctor
-# EL9 only ships libgc 8.0.4, but the stdlib needs GC_get_my_stackbottom from
+# EL only ships an old libgc (8.0.4 in EL9), but the stdlib needs GC_get_my_stackbottom from
 # 8.2, so build it from source like the Debian image does. Don't install
 # gc-devel here: the linker would prefer its libgc.so over this libgc.a.
 WORKDIR /tmp/libgc
@@ -99,11 +99,15 @@ ARG TARGETARCH
 RUN fpm -s dir -t rpm -n crystal -v $(sed 's/-/~/' pkg/usr/share/crystal/src/VERSION) --iteration ${pkg_revision} -a ${TARGETARCH} \
   --url https://crystal-lang.org --maintainer "84codes <contact@84codes.com>" \
   --description "a general-purpose, object-oriented programming language" \
-  --depends gcc --depends pkgconfig --depends libevent-devel \
+  --depends gcc --depends pkgconfig \
   --depends pcre2-devel \
-  --depends gmp-devel --depends openssl-devel --depends libxml2-devel \
-  --depends libyaml-devel --depends zlib-devel \
-  --depends llvm${llvm_version}-libs --depends libffi \
+  --depends llvm${llvm_version}-libs --depends libffi --depends libxml2 --depends libyaml \
+  --rpm-tag "Recommends: libevent-devel" \
+  --rpm-tag "Recommends: gmp-devel" \
+  --rpm-tag "Recommends: openssl-devel" \
+  --rpm-tag "Recommends: libxml2-devel" \
+  --rpm-tag "Recommends: libyaml-devel" \
+  --rpm-tag "Recommends: zlib-devel" \
   --license "ASL 2.0" --chdir pkg .
 
 # put .rpm file in a scratch image for exporting
@@ -113,6 +117,8 @@ COPY --from=pkg-builder /tmp/pkg/*.rpm .
 # start from a clean image
 FROM $base_image:$base_image_tag
 COPY --from=pkg-builder /tmp/pkg/*.rpm .
-RUN dnf install -y --nodocs --enablerepo=crb git make ./*.rpm && dnf clean all && rm ./*.rpm
+# install the Recommends explicitly so the build fails if any of them are unavailable
+RUN dnf install -y --nodocs --enablerepo=crb git make ./*.rpm $(rpm -qp --recommends ./*.rpm) && \
+    dnf clean all && rm ./*.rpm
 # set the default cmd, example usage: docker run --rm 84codes/crystal eval 'puts "hello world"'
 ENTRYPOINT ["/usr/bin/crystal"]
