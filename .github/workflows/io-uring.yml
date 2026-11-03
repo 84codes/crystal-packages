@@ -7,7 +7,7 @@ env:
   crystal_version: feature-io-uring
   crystal_src_url: https://github.com/ysbaddaden/crystal/archive/refs/heads/feature/io-uring.tar.gz
   shards_version: 0.20.0
-  gc_version: 8.2.10
+  gc_version: 8.2.12
 
 permissions:
   contents: read

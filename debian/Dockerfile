@@ -20,13 +20,13 @@ COPY --from=alpine /usr/share/crystal /usr/share/crystal
 WORKDIR /usr/src
 
 # build libgc
-ARG gc_version=8.2.8
+ARG gc_version=8.2.12
 ADD https://github.com/ivmai/bdwgc/archive/v${gc_version}.tar.gz bdwgc.tar.gz
 RUN tar zxf bdwgc.tar.gz && \
     cd bdwgc-${gc_version} && \
     ./autogen.sh && \
-    ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
-    make -j$(nproc) $(shell dpkg-buildflags --export=cmdline) && \
+    CFLAGS="$(DEB_BUILD_MAINT_OPTIONS=optimize=-lto dpkg-buildflags --get CFLAGS) -fPIC -pipe -std=gnu17" ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
+    make -j$(nproc) && \
     make install
 
 # Build crystal

@@ -2,17 +2,20 @@ Name:           crystal
 Version:        %(echo %{getenv:crystal_version} | tr '-' '.')
 Release:        %{getenv:pkg_revision}%{?dist}
 Summary:        A general-purpose, object-oriented programming language
-License:        Apache-2.0
+License:        Apache-2.0 AND Boehm-GC
 URL:            https://crystal-lang.org
 Packager:       84codes <contact@84codes.com>
 
 %define _enable_debug_packages 0
+# libgc is shipped as a static archive that the compiler links into every
+# program; LTO bytecode in it would tie programs to this exact gcc version
+%define _lto_cflags %{nil}
 
-BuildRequires:  git gcc gcc-c++ make gc-devel llvm-devel
+BuildRequires:  git gcc gcc-c++ make llvm-devel
 BuildRequires:  pcre2-devel libyaml-devel libffi-devel
 BuildRequires:  asciidoctor
 
-Requires:       gcc pkgconfig gc-devel pcre2-devel
+Requires:       gcc pkgconfig pcre2-devel
 Recommends:     openssl-devel zlib-devel
 Recommends:     libyaml-devel libxml2-devel gmp-devel
 # Commonly used by shards
@@ -20,6 +23,7 @@ Recommends:     git make
 
 Source0: crystal.tar.gz
 Source1: shards.tar.gz
+Source2: gc.tar.gz
 
 %description
 Crystal is a programming language with the following goals:
@@ -30,9 +34,18 @@ Crystal is a programming language with the following goals:
 - Compile to efficient native code
 
 %prep
-%setup -q -n crystal-%{getenv:crystal_version} -b 1
+%setup -q -n crystal-%{getenv:crystal_version} -b 1 -b 2
 
 %build
+# Build libgc as a static library, same flags as the other distributions.
+# Fedora's gc package is shared-only, and linking it statically into
+# programs means they don't depend on libgc at runtime.
+cd ../gc-%{getenv:gc_version}
+CFLAGS="%{build_cflags} -fPIC -std=gnu17" ./configure --disable-debug --disable-shared --enable-large-config
+%make_build
+# Put it on the default linker path so the compiler and shards link it
+install -Dm644 .libs/libgc.a %{_libdir}/libgc.a
+
 # Build Crystal
 cd ../crystal-%{getenv:crystal_version}
 make release=1 interpreter=1 LDFLAGS="%{build_ldflags}" CRYSTAL_CONFIG_LIBRARY_PATH=%{_libdir}/crystal
@@ -50,10 +63,17 @@ make install DESTDIR=%{buildroot} PREFIX=%{_prefix}
 cd ../shards-%{getenv:shards_version}
 make install DESTDIR=%{buildroot} PREFIX=%{_prefix}
 
+# Install libgc where the compiler looks for it (CRYSTAL_CONFIG_LIBRARY_PATH)
+cd ../gc-%{getenv:gc_version}
+install -Dm644 .libs/libgc.a %{buildroot}%{_libdir}/crystal/libgc.a
+install -Dm644 README.md %{buildroot}%{_datadir}/licenses/crystal/LICENSE.libgc
+
 %files
 %license %{_datadir}/licenses/crystal/LICENSE
+%license %{_datadir}/licenses/crystal/LICENSE.libgc
 %{_bindir}/crystal
 %{_bindir}/shards
+%{_libdir}/crystal/libgc.a
 %{_datadir}/crystal
 %{_datadir}/zsh/site-functions/_crystal
 %{_datadir}/bash-completion/completions/crystal
