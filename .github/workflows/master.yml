@@ -8,7 +8,7 @@ on:
 env:
   crystal_version: master
   shards_version: 0.20.0
-  gc_version: 8.2.10
+  gc_version: 8.2.12
 
 permissions:
   contents: read

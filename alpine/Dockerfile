@@ -11,13 +11,13 @@ RUN apk add --update --no-cache \
 
 WORKDIR /usr/src
 # Build libgc
-ARG gc_version=8.2.8
+ARG gc_version=8.2.12
 ADD https://github.com/ivmai/bdwgc/archive/v${gc_version}.tar.gz bdwgc.tar.gz
 RUN tar zxf bdwgc.tar.gz && \
     cd bdwgc-${gc_version} && \
     source /usr/share/abuild/default.conf && \
     ./autogen.sh && \
-    ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
+    CFLAGS="$CFLAGS -fPIC -pipe -O2 -std=gnu17" ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
     make -j$(nproc) && \
     make install
 

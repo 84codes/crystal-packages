@@ -12,11 +12,11 @@ RUN apt-get update && \
     apt-get install -y git gcc g++ make autoconf automake libtool
 # build libgc
 WORKDIR /tmp/libgc
-ARG gc_version=8.2.8
+ARG gc_version=8.2.12
 RUN git clone --depth=1 --single-branch --branch=v${gc_version} https://github.com/ivmai/bdwgc.git . && \
   ./autogen.sh && \
-  ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
-  make -j$(nproc) CFLAGS="-DNO_GETCONTEXT -pipe -fPIE -O3" && \
+  CFLAGS="-fPIC -pipe -O2 -std=gnu17" ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
+  make -j$(nproc) && \
   make install
 COPY --from=alpine /usr/bin/shards /usr/bin/
 COPY --from=alpine /usr/bin/crystal /usr/bin/
