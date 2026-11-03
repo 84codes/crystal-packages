@@ -1,124 +1,61 @@
 ARG base_image=almalinux
 ARG base_image_tag=9
-ARG crystal_version=1.21.1
 
 # Copy the statically compiled compiler from this image
-FROM --platform=$BUILDPLATFORM 84codes/crystal:latest-alpine AS alpine
+FROM 84codes/crystal:latest-alpine AS alpine
 
-FROM --platform=$BUILDPLATFORM $base_image:$base_image_tag AS builder
-ARG llvm_version
+FROM $base_image:$base_image_tag AS builder
 # add dependencies required for building crystal from source
+# (libyaml-devel is in the CRB repository)
 RUN dnf install -y --nodocs --enablerepo=crb \
-        git gcc gcc-c++ make libevent-devel \
-        llvm${llvm_version}-devel \
-        pcre2-devel libxml2-devel libyaml-devel \
-        zlib-devel autoconf automake libtool ruby && \
+        git gcc gcc-c++ make llvm-devel \
+        pcre2-devel libyaml-devel libffi-devel \
+        rpm-build rpmdevtools ruby && \
     dnf clean all
 # asciidoctor generates the man pages, it's not packaged in EL (only in EPEL)
 RUN gem install --no-document asciidoctor
-# EL only ships an old libgc (8.0.4 in EL9), but the stdlib needs GC_get_my_stackbottom from
-# 8.2, so build it from source like the Debian image does. Don't install
-# gc-devel here: the linker would prefer its libgc.so over this libgc.a.
-WORKDIR /tmp/libgc
-ARG gc_version=8.2.12
-RUN git clone --depth=1 --single-branch --branch=v${gc_version} https://github.com/ivmai/bdwgc.git . && \
-  ./autogen.sh && \
-  CFLAGS="-fPIC -pipe -O2 -std=gnu17" ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
-  make -j$(nproc) && \
-  make install
+
+# Use static compiler to compile crystal
 COPY --from=alpine /usr/bin/shards /usr/bin/
 COPY --from=alpine /usr/bin/crystal /usr/bin/
 COPY --from=alpine /usr/share/crystal /usr/share/crystal
-COPY --from=alpine /usr/share/man/man1/crystal.1.gz /usr/share/man/man1/
-COPY --from=alpine /usr/share/man/man1/shards.1.gz /usr/share/man/man1/
-COPY --from=alpine /usr/share/man/man5/shard.yml.5.gz /usr/share/man/man5/
-# Cross compile for target architecture
-ARG TARGETARCH
-# Build crystal
-WORKDIR /tmp/crystal
-ARG crystal_version
-RUN git clone --depth=1 --single-branch --branch=$crystal_version https://github.com/crystal-lang/crystal.git . && \
-  make man/ && \
-  gzip -9 man/*.1 && \
-  mkdir .build && \
-  make crystal interpreter=1 release=1 target=$TARGETARCH-unknown-linux-gnu \
-    PREFIX=/usr FLAGS="--no-debug" CRYSTAL_CONFIG_LIBRARY_PATH=/usr/lib64/crystal | tail -1 > .build/crystal.sh
-# Build shards
-WORKDIR /tmp/shards
+
+# Setup RPM build environment
+RUN rpmdev-setuptree
+
+# use rpmbuild to build RPM package
+WORKDIR /root/rpmbuild
+COPY crystal.spec /root/rpmbuild/SPECS/
+
+ARG crystal_version=1.21.1
 ARG shards_version=0.20.0
-RUN git clone --depth=1 --single-branch --branch=v${shards_version} https://github.com/crystal-lang/shards.git . && \
-  gzip -9 man/shards.1 man/shard.yml.5 && \
-  make bin/shards FLAGS="--release --no-debug --cross-compile --target=$TARGETARCH-unknown-linux-gnu" | tail -1 > bin/shards.sh
-
-# link on target platform
-FROM $base_image:$base_image_tag AS target-builder
-ARG llvm_version
-RUN dnf install -y --nodocs --enablerepo=crb \
-        git gcc gcc-c++ make libevent-devel \
-        llvm${llvm_version}-devel \
-        pcre2-devel libxml2-devel libyaml-devel libffi-devel \
-        openssl-devel zlib-devel gmp-devel autoconf automake libtool && \
-    dnf clean all
-# build libgc
-WORKDIR /tmp/libgc
 ARG gc_version=8.2.12
-RUN git clone --depth=1 --single-branch --branch=v${gc_version} https://github.com/ivmai/bdwgc.git . && \
-  ./autogen.sh && \
-  CFLAGS="-fPIC -pipe -O2 -std=gnu17" ./configure --disable-debug --disable-shared --enable-large-config --prefix=/usr && \
-  make -j$(nproc) && \
-  make install
-# Link crystal
-WORKDIR /tmp/crystal
-COPY --from=builder /tmp/crystal/Makefile .
-COPY --from=builder /tmp/crystal/src/llvm/ext src/llvm/ext
-COPY --from=builder /tmp/crystal/.build .build
-RUN make llvm_ext
-RUN sh -ex .build/crystal.sh && strip .build/crystal
-# Link shards
-WORKDIR /tmp/shards
-COPY --from=builder /tmp/shards/bin bin
-RUN sh -ex bin/shards.sh && strip bin/shards
-
-# build rpm package
-FROM --platform=$BUILDPLATFORM $base_image:$base_image_tag AS pkg-builder
-RUN dnf install -y --nodocs \
-    ruby ruby-devel make gcc rpm-build && gem install --no-document fpm
-# build distribution packages
-WORKDIR /tmp/pkg
-# copy the binaries + stdlib + libgc from the build stage
-COPY --from=builder /tmp/crystal/man/*.1.gz pkg/usr/share/man/man1/
-COPY --from=builder /tmp/shards/man/shards.1.gz pkg/usr/share/man/man1/
-COPY --from=builder /tmp/shards/man/shard.yml.5.gz pkg/usr/share/man/man5/
-COPY --from=builder /tmp/crystal/src pkg/usr/share/crystal/src
-COPY --from=target-builder /tmp/crystal/.build/crystal pkg/usr/bin/
-COPY --from=target-builder /tmp/shards/bin/shards pkg/usr/bin/
-COPY --from=target-builder /usr/lib64/libgc.a pkg/usr/lib64/crystal/
-ARG llvm_version
 ARG pkg_revision=1
-ARG TARGETARCH
-RUN fpm -s dir -t rpm -n crystal -v $(sed 's/-/~/' pkg/usr/share/crystal/src/VERSION) --iteration ${pkg_revision} -a ${TARGETARCH} \
-  --url https://crystal-lang.org --maintainer "84codes <contact@84codes.com>" \
-  --description "a general-purpose, object-oriented programming language" \
-  --depends gcc --depends pkgconfig \
-  --depends pcre2-devel \
-  --depends llvm${llvm_version}-libs --depends libffi --depends libxml2 --depends libyaml \
-  --rpm-tag "Recommends: libevent-devel" \
-  --rpm-tag "Recommends: gmp-devel" \
-  --rpm-tag "Recommends: openssl-devel" \
-  --rpm-tag "Recommends: libxml2-devel" \
-  --rpm-tag "Recommends: libyaml-devel" \
-  --rpm-tag "Recommends: zlib-devel" \
-  --license "ASL 2.0" --chdir pkg .
+
+# Download sources
+ARG crystal_src_url=https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz
+ADD ${crystal_src_url} /root/rpmbuild/SOURCES/crystal.tar.gz
+ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.tar.gz /root/rpmbuild/SOURCES/shards.tar.gz
+ADD https://github.com/ivmai/bdwgc/releases/download/v${gc_version}/gc-${gc_version}.tar.gz /root/rpmbuild/SOURCES/gc.tar.gz
+
+# Build the RPM package
+RUN rpmbuild -bb SPECS/crystal.spec \
+    --define "crystal_version $crystal_version" \
+    --define "shards_version $shards_version" \
+    --define "gc_version $gc_version" \
+    --define "pkg_revision $pkg_revision"
 
 # put .rpm file in a scratch image for exporting
 FROM scratch AS pkgs
-COPY --from=pkg-builder /tmp/pkg/*.rpm .
+COPY --from=builder /root/rpmbuild/RPMS/*/*.rpm .
 
 # start from a clean image
 FROM $base_image:$base_image_tag
-COPY --from=pkg-builder /tmp/pkg/*.rpm .
+COPY --from=builder /root/rpmbuild/RPMS/*/*.rpm .
 # install the Recommends explicitly so the build fails if any of them are unavailable
+# (curl is already in the base image, EL9's curl-minimal conflicts with the curl package)
 RUN dnf install -y --nodocs --enablerepo=crb git make ./*.rpm $(rpm -qp --recommends ./*.rpm) && \
     dnf clean all && rm ./*.rpm
+RUN crystal eval 'puts 1'
 # set the default cmd, example usage: docker run --rm 84codes/crystal eval 'puts "hello world"'
 ENTRYPOINT ["/usr/bin/crystal"]
