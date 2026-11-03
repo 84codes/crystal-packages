@@ -7,7 +7,7 @@ FROM 84codes/crystal:latest-alpine AS alpine
 FROM $base_image:$base_image_tag AS builder
 # add dependencies required for building crystal from source
 RUN dnf install -y --nodocs --repo=fedora,updates \
-        git gcc gcc-c++ make gc-devel llvm-devel \
+        git gcc gcc-c++ make llvm-devel \
         pcre2-devel libyaml-devel libffi-devel \
         rpm-build rpmdevtools asciidoctor && \
     dnf clean all
@@ -26,17 +26,20 @@ COPY crystal.spec /root/rpmbuild/SPECS/
 
 ARG crystal_version=1.21.1
 ARG shards_version=0.20.0
+ARG gc_version=8.2.12
 ARG pkg_revision=1
 
 # Download sources
 ARG crystal_src_url=https://github.com/crystal-lang/crystal/archive/${crystal_version}.tar.gz
 ADD ${crystal_src_url} /root/rpmbuild/SOURCES/crystal.tar.gz
 ADD https://github.com/crystal-lang/shards/archive/refs/tags/v${shards_version}.tar.gz /root/rpmbuild/SOURCES/shards.tar.gz
+ADD https://github.com/ivmai/bdwgc/releases/download/v${gc_version}/gc-${gc_version}.tar.gz /root/rpmbuild/SOURCES/gc.tar.gz
 
 # Build the RPM package
 RUN rpmbuild -bb SPECS/crystal.spec \
     --define "crystal_version $crystal_version" \
     --define "shards_version $shards_version" \
+    --define "gc_version $gc_version" \
     --define "pkg_revision $pkg_revision"
 
 # put .rpm file in a scratch image for exporting
@@ -47,5 +50,6 @@ COPY --from=builder /root/rpmbuild/RPMS/*/*.rpm .
 FROM $base_image:$base_image_tag
 COPY --from=builder /root/rpmbuild/RPMS/*/*.rpm .
 RUN dnf install -y --nodocs --repo=fedora,updates git curl make ./*.rpm && dnf clean all && rm ./*.rpm
+RUN crystal eval 'puts 1'
 # set the default cmd, example usage: docker run --rm 84codes/crystal eval 'puts "hello world"'
 ENTRYPOINT ["/usr/bin/crystal"]
