@@ -20,6 +20,12 @@ permissions:
   contents: read
   id-token: write
 
+# All runs share the same Depot builders (16 GiB RAM per architecture), so
+# don't keep building commits that have been superseded on a pull request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   alpine:
     name: Alpine container
@@ -91,12 +97,16 @@ jobs:
           PACKAGECLOUD_TOKEN: ${{ secrets.packagecloud_token }}
         if: github.ref == 'refs/heads/main'
 
+  # Each job builds both architectures on the shared Depot builders, which
+  # have 16 GiB RAM each. Limit to one compiler build at a time per
+  # distribution, so at most 4 run in parallel: alpine/debian-static,
+  # debian, fedora and almalinux.
   debian:
     name: Debian
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
     strategy:
-      max-parallel: 2
+      max-parallel: 1
       fail-fast: false
       matrix:
         include:
@@ -323,6 +333,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
     strategy:
+      max-parallel: 1
       fail-fast: false
       matrix:
         include:
