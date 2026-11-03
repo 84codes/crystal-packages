@@ -57,7 +57,7 @@ ENTRYPOINT ["/myapp"]
 
 ## Supported OSes and versions
 
-We keep up with new releases of Alpine, Ubuntu, Debian, Fedora and CentOS Stream.
+We keep up with new releases of Alpine, Ubuntu, Debian, Fedora and Enterprise Linux (built on AlmaLinux, compatible with RHEL, Rocky Linux and CentOS Stream).
 
 - Alpine latest
 - Ubuntu 22.04
@@ -68,7 +68,8 @@ We keep up with new releases of Alpine, Ubuntu, Debian, Fedora and CentOS Stream
 - Fedora 43
 - Fedora 44
 - Fedora 45
-- CentOS Stream 9
+- Enterprise Linux 9 (AlmaLinux 9)
+- Enterprise Linux 10 (AlmaLinux 10)
 
 Ubuntu 20.04 is covered by the statically linked packages only.
 
@@ -101,6 +102,23 @@ sudo tee /etc/yum.repos.d/84codes_crystal.repo << 'EOF'
 [84codes_crystal]
 name=84codes_crystal
 baseurl=https://packagecloud.io/84codes/crystal/fedora/$releasever/$basearch
+gpgkey=https://packagecloud.io/84codes/crystal/gpgkey
+repo_gpgcheck=1
+gpgcheck=0
+EOF
+sudo dnf install crystal
+```
+
+#### Dynamically linked binaries for Enterprise Linux 9 and 10 (RHEL, AlmaLinux, Rocky Linux, CentOS Stream)
+
+The `-devel` packages needed by parts of the stdlib (OpenSSL, YAML, XML, BigInt, zlib) are weak dependencies (`Recommends`) and are installed when available. `libyaml-devel` lives in the CRB repository, so enable it first if you use `require "yaml"` (on RHEL use `subscription-manager repos --enable codeready-builder-for-rhel-$(rpm -E %rhel)-$(arch)-rpms` instead of `dnf config-manager`).
+
+```sh
+sudo dnf config-manager --set-enabled crb # optional, for libyaml-devel
+sudo tee /etc/yum.repos.d/84codes_crystal.repo << 'EOF'
+[84codes_crystal]
+name=84codes_crystal
+baseurl=https://packagecloud.io/84codes/crystal/el/$releasever/$basearch
 gpgkey=https://packagecloud.io/84codes/crystal/gpgkey
 repo_gpgcheck=1
 gpgcheck=0
