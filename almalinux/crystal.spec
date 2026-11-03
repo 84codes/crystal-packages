@@ -21,7 +21,6 @@ BuildRequires:  pcre2-devel libyaml-devel libffi-devel
 Requires:       gcc pkgconfig pcre2-devel
 Recommends:     openssl-devel zlib-devel
 Recommends:     libyaml-devel libxml2-devel gmp-devel
-Recommends:     libevent-devel
 # Commonly used by shards
 Recommends:     git make
 
