@@ -21,6 +21,19 @@ Recommends:     libyaml-devel libxml2-devel gmp-devel
 # Commonly used by shards
 Recommends:     git make
 
+# Terra's crystal package splits the bash and fish completions into
+# subpackages that require the exact crystal version, which blocks upgrading
+# to this package. The completions are included in this package, so replace
+# the subpackages.
+Provides:       crystal-bash-completion = %{version}-%{release}
+Obsoletes:      crystal-bash-completion < %{version}-%{release}
+Provides:       crystal-fish-completion = %{version}-%{release}
+Obsoletes:      crystal-fish-completion < %{version}-%{release}
+# Terra also packages shards separately, which conflicts with the shards
+# binary included here
+Provides:       shards = %{getenv:shards_version}
+Obsoletes:      shards <= %{getenv:shards_version}
+
 Source0: crystal.tar.gz
 Source1: shards.tar.gz
 Source2: gc.tar.gz
