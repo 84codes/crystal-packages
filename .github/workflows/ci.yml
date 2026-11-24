@@ -10,6 +10,14 @@ on:
       - .github/workflows/master.yml
   schedule:
     - cron: '45 4 * * *'
+  # Rebuilds the AlmaLinux and Fedora images on their current base image. They
+  # use the distribution's default LLVM, so an image goes stale when the
+  # distribution moves to a new LLVM version
+  workflow_dispatch:
+    inputs:
+      crystal_version:
+        description: Crystal version to rebuild, e.g. 1.22.2. Empty for the current one, which also moves the latest tags
+        default: ""
 
 env:
   crystal_version: 1.22.3
@@ -30,6 +38,7 @@ jobs:
   alpine:
     name: Alpine container
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch'
     strategy:
       matrix:
         include:
@@ -68,7 +77,7 @@ jobs:
     name: Debian/RPM static packages
     needs: alpine
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v5
       - uses: depot/setup-action@v1
@@ -104,7 +113,7 @@ jobs:
   debian:
     name: Debian
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     strategy:
       max-parallel: 1
       fail-fast: false
@@ -192,7 +201,7 @@ jobs:
     name: Debian (static)
     runs-on: ubuntu-latest
     needs: alpine
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -277,6 +286,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+      - name: Build the requested Crystal version
+        run: echo "crystal_version=$VERSION" >> "$GITHUB_ENV"
+        env:
+          VERSION: ${{ inputs.crystal_version }}
+        if: ${{ inputs.crystal_version != '' }}
       - name: Login to DockerHub
         uses: docker/login-action@v4
         with:
@@ -300,7 +314,7 @@ jobs:
             pkg_revision=${{ github.run_number }}
           tags: |
             84codes/crystal:${{ env.crystal_version }}-${{ matrix.base_image }}-${{ matrix.base_image_tag }}
-            84codes/crystal:latest-${{ matrix.base_image }}-${{ matrix.base_image_tag }}
+            ${{ inputs.crystal_version == '' && format('84codes/crystal:latest-{0}-{1}', matrix.base_image, matrix.base_image_tag) || '' }}
           push: ${{ github.ref == 'refs/heads/main' }}
       - uses: depot/build-push-action@v1
         name: Export packages
@@ -346,6 +360,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+      - name: Build the requested Crystal version
+        run: echo "crystal_version=$VERSION" >> "$GITHUB_ENV"
+        env:
+          VERSION: ${{ inputs.crystal_version }}
+        if: ${{ inputs.crystal_version != '' }}
       - name: Login to DockerHub
         uses: docker/login-action@v4
         with:
@@ -370,8 +389,8 @@ jobs:
           tags: |
             84codes/crystal:${{ env.crystal_version }}-almalinux-${{ matrix.base_image_tag }}
             84codes/crystal:${{ env.crystal_version }}-el-${{ matrix.el_version }}
-            84codes/crystal:latest-almalinux-${{ matrix.base_image_tag }}
-            84codes/crystal:latest-el-${{ matrix.el_version }}
+            ${{ inputs.crystal_version == '' && format('84codes/crystal:latest-almalinux-{0}', matrix.base_image_tag) || '' }}
+            ${{ inputs.crystal_version == '' && format('84codes/crystal:latest-el-{0}', matrix.el_version) || '' }}
           push: ${{ github.ref == 'refs/heads/main' }}
       - uses: depot/build-push-action@v1
         name: Export packages
